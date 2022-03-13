@@ -56,7 +56,7 @@ const videos = [
 ];
 
 const VideosTable = () => (
-  <section className="bg-indigo-300 text-gray-600 h-screen px-4">
+  <section className="bg-indigo-500 text-gray-600 h-screen px-4">
     <div className="flex flex-col pt-20 h-full">
       <div className="w-full max-w-7xl mx-auto bg-white shadow-lg rounded-lg border border-gray-200">
         <header className="px-5 py-4 border-b border-gray-100">

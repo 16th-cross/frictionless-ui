@@ -1,21 +1,97 @@
-import axios from "axios";
+import { useForm } from "react-hook-form";
+import {
+  createDirectUploadURL,
+  exportAssetToIPFS,
+  listAssets,
+  retrieveTask,
+  uploadVideo,
+} from "../services";
 
 const UploadVideoPage = () => {
+  const { register, handleSubmit } = useForm();
+  // const file = event.target.files[0];
+  // const sourceURL = URL.createObjectURL(file);
   const onSubmit = async (values) => {
-    const { name, description, thumbnail, video } = values;
+    const { name, video } = values;
+
+    const videoArrayBuffer = await new Promise((resolve, reject) => {
+      const uploadFile = video[0];
+      let reader = new FileReader();
+      reader.onload = () => {
+        resolve(reader.result);
+      };
+      reader.onerror = () => {
+        reject(/*...*/);
+      };
+      reader.readAsArrayBuffer(uploadFile);
+    });
+
+    // 0. Create Direct upload url
+    const directUploadResponse = await createDirectUploadURL(name);
+    const uploadURL = directUploadResponse?.data?.url;
+
     // 1. Livepeer transcode
-    // 2. IPFS storage
-    // 3. Pin to IPFS
-    // 4. Mint NFT
-    // 5. POST data to backend
+    const uploadResponse = await uploadVideo(uploadURL, videoArrayBuffer);
+    console.log({ uploadResponse });
+
+    // 2. List all assets
+    const allAssetsResponse = await listAssets();
+    const latestAsset = allAssetsResponse?.data[0];
+    console.log({ latestAsset });
+
+    // 3. IPFS storage and pin to IPFS
+    const exportResponse = await exportAssetToIPFS(latestAsset.id);
+    const taskId = exportResponse.data?.task?.id;
+    console.log({ exportResponse });
+
+    // 4. Retrieve task and poll until its completion
+    const MAX_POLL_COUNT = 10;
+    const POLL_INTERVAL = 3000;
+
+    let pollCount = 0;
+    let retrieveTaskResponse;
+    while (pollCount < MAX_POLL_COUNT) {
+      console.log("polling", pollCount);
+      const response = await new Promise((resolve) => {
+        setTimeout(async () => {
+          const response = await retrieveTask(taskId);
+          resolve(response);
+        }, POLL_INTERVAL);
+      });
+
+      if (response.data.status.phase === "completed") {
+        retrieveTaskResponse = response;
+        break;
+      }
+      pollCount++;
+    }
+
+    console.log("Finish...Mint NFT now");
+
+    const output = retrieveTaskResponse?.data?.output;
+
+    if (!output) {
+      throw new Error("Request timeout, upload took too long");
+    }
+
+    const { videoFileCid, nftMetadataCid } = output?.export?.ipfs;
+    console.log({ videoFileCid, nftMetadataCid });
+
+    // 5. Mint NFT
+    // nftMetadataUrl
+    // const nftMetadataUrl = `ipfs://${nftMetadaCid}`;
+    // .mint(account, nftMetadataUrl)
+
+    // 6. POST data to backend
   };
+
   return (
     <section className="bg-indigo-500 text-gray-600 h-screen px-4">
       <div className="flex flex-col pt-20 h-full">
         <div className="w-full max-w-7xl mx-auto bg-white shadow-lg rounded-lg border border-gray-200">
           <div>
             <div className="mt-5 md:mt-0 md:col-span-2">
-              <form action="#" method="POST">
+              <form onSubmit={handleSubmit(onSubmit)}>
                 <div className="shadow sm:rounded-md sm:overflow-hidden">
                   <div className="px-4 py-5 bg-white space-y-6 sm:p-6">
                     <div className="grid grid-cols-6 gap-6">
@@ -29,8 +105,7 @@ const UploadVideoPage = () => {
                           </label>
                           <input
                             type="text"
-                            name="name"
-                            id="name"
+                            {...register("name")}
                             autoComplete="given-name"
                             className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                           />
@@ -44,12 +119,11 @@ const UploadVideoPage = () => {
                             </label>
                             <div className="mt-1">
                               <textarea
-                                id="description"
-                                name="description"
                                 rows={3}
                                 className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
                                 placeholder="This movie is awesome!!"
                                 defaultValue={""}
+                                {...register("description")}
                               />
                             </div>
                             <p className="mt-2 text-sm text-gray-500">
@@ -80,15 +154,14 @@ const UploadVideoPage = () => {
                             </svg>
                             <div className="flex text-sm text-gray-600">
                               <label
-                                htmlFor="file-upload"
+                                htmlFor="thumbnail-upload"
                                 className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500"
                               >
                                 <span>Upload an image</span>
                                 <input
-                                  id="file-upload"
-                                  name="file-upload"
                                   type="file"
                                   className="sr-only"
+                                  {...register("thumbnail")}
                                 />
                               </label>
                               <p className="pl-1">or drag and drop</p>
@@ -121,26 +194,26 @@ const UploadVideoPage = () => {
                               strokeLinejoin="round"
                             />
                           </svg>
-                          <div className="flex text-sm text-gray-600">
-                            <label
-                              htmlFor="file-upload"
-                              className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500"
-                            >
-                              <span>Upload a video</span>
-                              <input
-                                id="file-upload"
-                                name="file-upload"
-                                type="file"
-                                className="sr-only"
-                              />
-                            </label>
-                            <p className="pl-1">or drag and drop</p>
+                          <div className="flex text-sm text-center items-center justify-center w-64 text-gray-600">
+                            <input
+                              type="file"
+                              // className="sr-only"
+                              name="video"
+                              accept=".mp4"
+                              {...register("video")}
+                            />
                           </div>
                           <p className="text-xs text-gray-500">
                             Only .mp4 supported
                           </p>
                         </div>
                       </div>
+                      {/* <video
+                        className="VideoInput_video"
+                        width="100%"
+                        controls
+                        src={sourceURL}
+                      /> */}
                     </div>
                   </div>
                   <div className="px-4 py-3 bg-gray-50 text-center sm:px-6">
