@@ -1,4 +1,5 @@
 import { useForm } from "react-hook-form";
+import useWeb3Onboard from "../hooks/useWeb3Onboard";
 import {
   createDirectUploadURL,
   exportAssetToIPFS,
@@ -9,6 +10,7 @@ import {
 
 const UploadVideoPage = () => {
   const { register, handleSubmit } = useForm();
+  const { wallet } = useWeb3Onboard();
   // const file = event.target.files[0];
   // const sourceURL = URL.createObjectURL(file);
   const onSubmit = async (values) => {
@@ -26,25 +28,25 @@ const UploadVideoPage = () => {
       reader.readAsArrayBuffer(uploadFile);
     });
 
-    // 0. Create Direct upload url
+    // 1. Create Direct upload url
     const directUploadResponse = await createDirectUploadURL(name);
     const uploadURL = directUploadResponse?.data?.url;
 
-    // 1. Livepeer transcode
+    // 2. Livepeer transcode
     const uploadResponse = await uploadVideo(uploadURL, videoArrayBuffer);
     console.log({ uploadResponse });
 
-    // 2. List all assets
+    // 3. List all assets
     const allAssetsResponse = await listAssets();
     const latestAsset = allAssetsResponse?.data[0];
     console.log({ latestAsset });
 
-    // 3. IPFS storage and pin to IPFS
+    // 4. IPFS storage and pin to IPFS
     const exportResponse = await exportAssetToIPFS(latestAsset.id);
     const taskId = exportResponse.data?.task?.id;
     console.log({ exportResponse });
 
-    // 4. Retrieve task and poll until its completion
+    // 5. Retrieve task and poll until its completion
     const MAX_POLL_COUNT = 10;
     const POLL_INTERVAL = 3000;
 
@@ -77,12 +79,13 @@ const UploadVideoPage = () => {
     const { videoFileCid, nftMetadataCid } = output?.export?.ipfs;
     console.log({ videoFileCid, nftMetadataCid });
 
-    // 5. Mint NFT
-    // nftMetadataUrl
+    // 6. Mint NFT
     // const nftMetadataUrl = `ipfs://${nftMetadaCid}`;
     // .mint(account, nftMetadataUrl)
 
-    // 6. POST data to backend
+    // 7. POST data to backend
+    const walletAddress = wallet?.accounts[0]?.address;
+    console.log({ walletAddress });
   };
 
   return (
