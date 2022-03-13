@@ -41,6 +41,7 @@ const UploadVideoPage = () => {
     const allAssetsResponse = await listAssets();
     const latestAsset = allAssetsResponse?.data[0];
     console.log({ latestAsset });
+    const video_duration = Math.ceil(latestAsset?.videoSpec.duration);
 
     // 4. IPFS storage and pin to IPFS
     const exportResponse = await exportAssetToIPFS(latestAsset.id);
@@ -95,7 +96,7 @@ const UploadVideoPage = () => {
       nft_cid: nftMetadataCid,
       video_cid: videoFileCid,
       wallet_address: walletAddress,
-      video_duration: 60,
+      video_duration,
     });
 
     console.log({ storeVideoResponse });
