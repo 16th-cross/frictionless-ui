@@ -47,10 +47,35 @@ const retrieveTask = (taskId) => {
   });
 };
 
+const storeVideo = ({
+  name,
+  description,
+  txn_hash,
+  nft_cid,
+  video_cid,
+  wallet_address,
+  video_duration,
+}) => {
+  return axios.post("http://localhost:6060/add-video", {
+    name,
+    description,
+    txn_hash,
+    nft_cid,
+    video_cid,
+    wallet_address,
+    video_duration,
+  });
+};
+
+const fetchAllVideos = () => {
+  return axios.get("http://localhost:6060/get-all");
+};
 export {
   createDirectUploadURL,
   uploadVideo,
   listAssets,
   exportAssetToIPFS,
   retrieveTask,
+  storeVideo,
+  fetchAllVideos,
 };

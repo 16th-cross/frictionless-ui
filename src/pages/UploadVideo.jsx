@@ -5,6 +5,7 @@ import {
   exportAssetToIPFS,
   listAssets,
   retrieveTask,
+  storeVideo,
   uploadVideo,
 } from "../services";
 
@@ -14,7 +15,7 @@ const UploadVideoPage = () => {
   // const file = event.target.files[0];
   // const sourceURL = URL.createObjectURL(file);
   const onSubmit = async (values) => {
-    const { name, video } = values;
+    const { name, description, video } = values;
 
     const videoArrayBuffer = await new Promise((resolve, reject) => {
       const uploadFile = video[0];
@@ -86,6 +87,18 @@ const UploadVideoPage = () => {
     // 7. POST data to backend
     const walletAddress = wallet?.accounts[0]?.address;
     console.log({ walletAddress });
+    const storeVideoResponse = await storeVideo({
+      name,
+      description,
+      txn_hash:
+        "0x9c6618cf61cbe5c9ce9ceba7280f2182126cb09492abee7bcf876181a996cf76",
+      nft_cid: nftMetadataCid,
+      video_cid: videoFileCid,
+      wallet_address: walletAddress,
+      video_duration: 60,
+    });
+
+    console.log({ storeVideoResponse });
   };
 
   return (
