@@ -1,4 +1,5 @@
 import { useForm } from "react-hook-form";
+import addresses from "../constants/addresses";
 import useWeb3Onboard from "../hooks/useWeb3Onboard";
 import {
   createDirectUploadURL,
@@ -8,12 +9,31 @@ import {
   storeVideo,
   uploadVideo,
 } from "../services";
+import FrictionlessNFTABI from "../constants/abi/FrictionlessNFT.json";
+import { ethers } from "ethers";
 
 const UploadVideoPage = () => {
   const { register, handleSubmit } = useForm();
-  const { wallet } = useWeb3Onboard();
+  const { wallet, provider } = useWeb3Onboard();
   // const file = event.target.files[0];
   // const sourceURL = URL.createObjectURL(file);
+
+  const mintNFT = async (nftMetadataUrl) => {
+    const nftFactoryAddress = addresses.nftFactoryContract;
+    const signer = provider.getSigner();
+    const nftFactoryContract = new ethers.Contract(
+      nftFactoryAddress,
+      FrictionlessNFTABI,
+      signer
+    );
+
+    try {
+      const tx = await nftFactoryContract.mint(nftMetadataUrl);
+      return tx;
+    } catch (err) {
+      console.error(err);
+    }
+  };
   const onSubmit = async (values) => {
     const { name, description, video } = values;
 
@@ -82,24 +102,27 @@ const UploadVideoPage = () => {
     console.log({ videoFileCid, nftMetadataCid });
 
     // 6. Mint NFT
-    // const nftMetadataUrl = `ipfs://${nftMetadaCid}`;
-    // .mint(account, nftMetadataUrl)
+    const tx = await mintNFT(`ipfs://${nftMetadataCid}`);
+    const result = await tx.wait();
+    console.log({ result });
 
     // 7. POST data to backend
-    const walletAddress = wallet?.accounts[0]?.address;
-    console.log({ walletAddress });
-    const storeVideoResponse = await storeVideo({
-      name,
-      description,
-      txn_hash:
-        "0x9c6618cf61cbe5c9ce9ceba7280f2182126cb09492abee7bcf876181a996cf76",
-      nft_cid: nftMetadataCid,
-      video_cid: videoFileCid,
-      wallet_address: walletAddress,
-      video_duration,
-    });
-
-    console.log({ storeVideoResponse });
+    if (tx.hash) {
+      const walletAddress = wallet?.accounts[0]?.address;
+      console.log({ walletAddress });
+      const storeVideoResponse = await storeVideo({
+        name,
+        description,
+        txn_hash: tx.hash,
+        nft_cid: nftMetadataCid,
+        video_cid: videoFileCid,
+        trailer_nft_cid: nftMetadataCid,
+        trailer_video_cid: videoFileCid,
+        wallet_address: walletAddress,
+        video_duration,
+      });
+      console.log({ storeVideoResponse });
+    }
   };
 
   return (

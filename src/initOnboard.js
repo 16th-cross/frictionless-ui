@@ -11,18 +11,24 @@ const initOnboard = () =>
   init({
     wallets: [injected, fortmatic],
     chains: [
-      {
-        id: "0x89",
-        token: "MATIC",
-        label: "Matic Mainnet",
-        rpcUrl: "https://matic-mainnet.chainstacklabs.com",
-      },
+      // {
+      //   id: "0x89",
+      //   token: "MATIC",
+      //   label: "Matic Mainnet",
+      //   rpcUrl: "https://matic-mainnet.chainstacklabs.com",
+      // },
       {
         id: "0x13881",
         token: "MATIC",
         label: "Mumbai Testnet",
         rpcUrl:
           "https://rpc-mumbai.maticvigil.com/v1/ee88c0928ef4396cb42c61833d0736ecc7340f07",
+      },
+      {
+        id: "0x5",
+        token: "ETH",
+        label: "Goerli Testnet",
+        rpcUrl: "https://rpc.goerli.mudit.blog/",
       },
     ],
     appMetadata: {

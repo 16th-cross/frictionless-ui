@@ -31,7 +31,7 @@ const VideosTable = () => {
             description,
             url: `https://ipfs.livepeer.com/ipfs/${video_cid}`,
             createdBy: wallet_address,
-            nftHash: `https://mumbai.polygonscan.com/tx/${txn_hash}`,
+            nftHash: `https://goerli.etherscan.io/tx/${txn_hash}`,
             video_duration,
             nft_cid,
           })
@@ -134,7 +134,7 @@ const VideosTable = () => {
                           </td>
                           <td className="p-4 whitespace-nowrap">
                             <div className="text-left ">
-                              {video_duration} min
+                              {video_duration} sec
                             </div>
                           </td>
                           <td className="p-4 whitespace-nowrap">

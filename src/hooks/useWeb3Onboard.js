@@ -1,5 +1,7 @@
 import React from "react";
 import { useConnectWallet, useSetChain } from "@web3-onboard/react";
+// import Web3 from "web3";
+import { ethers } from "ethers";
 
 const Web3Context = React.createContext();
 
@@ -17,6 +19,9 @@ export const Web3Provider = ({ children }) => {
         connectedChain,
         settingChain,
         setChain,
+        provider: wallet?.provider
+          ? new ethers.providers.Web3Provider(wallet.provider)
+          : undefined,
       }}
     >
       {children}

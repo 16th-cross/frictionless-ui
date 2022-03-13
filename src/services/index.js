@@ -53,6 +53,8 @@ const storeVideo = ({
   txn_hash,
   nft_cid,
   video_cid,
+  trailer_nft_cid,
+  trailer_video_cid,
   wallet_address,
   video_duration,
 }) => {
@@ -62,6 +64,8 @@ const storeVideo = ({
     txn_hash,
     nft_cid,
     video_cid,
+    trailer_nft_cid,
+    trailer_video_cid,
     wallet_address,
     video_duration,
   });
