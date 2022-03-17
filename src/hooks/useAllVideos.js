@@ -1,11 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchAllVideos } from "../services";
-import DarkKnightImg from "../assets/darkknight.jpeg";
-import StarWarsImg from "../assets/starwars.jpeg";
-import InterstellarImg from "../assets/interstellar.jpg";
-import MatrixImg from "../assets/matrix.jpg";
 
-const images = [DarkKnightImg, StarWarsImg, InterstellarImg, MatrixImg];
 function useAllVideos() {
   const [videosList, setVideosList] = useState([]);
   const [status, setStatus] = useState("idle");
@@ -15,6 +10,7 @@ function useAllVideos() {
 
     try {
       const { data } = await fetchAllVideos();
+      console.log(data.message);
 
       if (data.message) {
         const allVideos = data.message.map(
@@ -23,9 +19,11 @@ function useAllVideos() {
               id,
               name,
               description,
-              nft_cid,
+              image_cid,
+              trailer_nft_cid,
               txn_hash,
               video_cid,
+              trailer_video_cid,
               video_duration,
               wallet_address,
             },
@@ -35,11 +33,12 @@ function useAllVideos() {
             name,
             description,
             url: `https://ipfs.livepeer.com/ipfs/${video_cid}`,
+            trailer_url: `https://ipfs.livepeer.com/ipfs/${trailer_video_cid}`,
             createdBy: wallet_address,
             nftHash: `https://goerli.etherscan.io/tx/${txn_hash}`,
             video_duration,
-            nft_cid,
-            imgSrc: images[idx % images.length],
+            trailer_nft_cid,
+            imgSrc: `https://ipfs.infura.io/ipfs/${image_cid}`,
           })
         );
         setVideosList(allVideos);

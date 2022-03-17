@@ -70,7 +70,7 @@ const AllVideosPage = () => {
                         id,
                         name,
                         description,
-                        url,
+                        trailer_url,
                         createdBy,
                         nftHash,
                         video_duration,
@@ -99,7 +99,7 @@ const AllVideosPage = () => {
                           </td>
                           <td className="p-4 whitespace-nowrap">
                             <div className="text-left">
-                              <ExternalLink href={url}>
+                              <ExternalLink href={trailer_url}>
                                 <PlayIcon />
                               </ExternalLink>
                             </div>

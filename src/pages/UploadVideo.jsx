@@ -14,14 +14,104 @@ import { ethers } from "ethers";
 import { useState } from "react";
 import LoadingIndicator from "../components/LoadingIndicator";
 import { useHistory } from "react-router-dom";
+import { create } from 'ipfs-http-client'
 
 const UploadVideoPage = () => {
   const { register, handleSubmit } = useForm();
   const { wallet, provider } = useWeb3Onboard();
   const history = useHistory();
   const [status, setStatus] = useState(false);
+  const client = create('https://ipfs.infura.io:5001/api/v0')
   // const file = event.target.files[0];
   // const sourceURL = URL.createObjectURL(file);
+
+  const transcodeAndUploadVideo = async (video_data, name) => {
+    const videoArrayBuffer = await new Promise((resolve, reject) => {
+      const uploadFile = video_data[0];
+      let reader = new FileReader();
+      reader.onload = () => {
+        resolve(reader.result);
+      };
+      reader.onerror = () => {
+        reject(/*...*/);
+      };
+      reader.readAsArrayBuffer(uploadFile);
+    });
+
+    // 1. Create Direct upload url
+    const directUploadResponse = await createDirectUploadURL(name);
+    const uploadURL = directUploadResponse?.data?.url;
+
+    // 2. Livepeer transcode
+    const uploadResponse = await uploadVideo(uploadURL, videoArrayBuffer);
+    console.log({ uploadResponse });
+    
+    // 3. List all assets
+    const MAX_POLL_COUNT = 10;
+    const POLL_INTERVAL = 3000;
+    let pollCount = 0;
+    let allAssestsResponse;
+    while (pollCount < MAX_POLL_COUNT) {
+      console.log("polling", pollCount);
+      const response = await new Promise((resolve) => {
+        setTimeout(async () => {
+          const response = await listAssets();
+          resolve(response);
+        }, POLL_INTERVAL);
+      });
+
+      if (response?.data[0].name === name) {
+        allAssestsResponse = response;
+        break;
+      }
+      pollCount++;
+    }
+
+    console.log("Finish...Got the asset data");
+
+    const latestAsset = allAssestsResponse?.data[0];
+
+    if (!latestAsset) {
+      throw new Error("Request timeout, upload took too long");
+    }
+
+    console.log({ latestAsset });
+    const video_duration = Math.ceil(latestAsset?.videoSpec.duration);
+
+    // 4. IPFS storage and pin to IPFS
+    const exportResponse = await exportAssetToIPFS(latestAsset.id);
+    const taskId = exportResponse.data?.task?.id;
+    console.log({ exportResponse });
+
+    // 5. Retrieve task and poll until its completion
+    pollCount = 0;
+    let retrieveTaskResponse;
+    while (pollCount < MAX_POLL_COUNT) {
+      console.log("polling", pollCount);
+      const response = await new Promise((resolve) => {
+        setTimeout(async () => {
+          const response = await retrieveTask(taskId);
+          resolve(response);
+        }, POLL_INTERVAL);
+      });
+
+      if (response.data.status.phase === "completed") {
+        retrieveTaskResponse = response;
+        break;
+      }
+      pollCount++;
+    }
+
+    const output = retrieveTaskResponse?.data?.output;
+
+    if (!output) {
+      throw new Error("Request timeout, upload took too long");
+    }
+
+    const { videoFileCid, nftMetadataCid } = output?.export?.ipfs;
+    console.log({ videoFileCid, nftMetadataCid });
+    return { videoFileCid, nftMetadataCid, video_duration };
+  };
 
   const mintNFT = async (nftMetadataUrl) => {
     const nftFactoryAddress = addresses.nftFactoryContract;
@@ -40,76 +130,24 @@ const UploadVideoPage = () => {
     }
   };
   const onSubmit = async (values) => {
-    const { name, description, video } = values;
+    const { name, description, thumbnail, trailer, video } = values;
     setStatus("loading");
 
     try {
-      const videoArrayBuffer = await new Promise((resolve, reject) => {
-        const uploadFile = video[0];
-        let reader = new FileReader();
-        reader.onload = () => {
-          resolve(reader.result);
-        };
-        reader.onerror = () => {
-          reject(/*...*/);
-        };
-        reader.readAsArrayBuffer(uploadFile);
-      });
+      // Upload image to IPFS
+      const added = await client.add(thumbnail[0]);
+      const imageFileCid = added.path;
+      console.log("Url for image =", imageFileCid);
 
-      // 1. Create Direct upload url
-      const directUploadResponse = await createDirectUploadURL(name);
-      const uploadURL = directUploadResponse?.data?.url;
+      // upload trailer to IPFS
+      const trailerData = await transcodeAndUploadVideo(trailer, `${name}_trailer`);
 
-      // 2. Livepeer transcode
-      const uploadResponse = await uploadVideo(uploadURL, videoArrayBuffer);
-      console.log({ uploadResponse });
-
-      // 3. List all assets
-      const allAssetsResponse = await listAssets();
-      const latestAsset = allAssetsResponse?.data[0];
-      console.log({ latestAsset });
-      const video_duration = Math.ceil(latestAsset?.videoSpec.duration);
-
-      // 4. IPFS storage and pin to IPFS
-      const exportResponse = await exportAssetToIPFS(latestAsset.id);
-      const taskId = exportResponse.data?.task?.id;
-      console.log({ exportResponse });
-
-      // 5. Retrieve task and poll until its completion
-      const MAX_POLL_COUNT = 10;
-      const POLL_INTERVAL = 3000;
-
-      let pollCount = 0;
-      let retrieveTaskResponse;
-      while (pollCount < MAX_POLL_COUNT) {
-        console.log("polling", pollCount);
-        const response = await new Promise((resolve) => {
-          setTimeout(async () => {
-            const response = await retrieveTask(taskId);
-            resolve(response);
-          }, POLL_INTERVAL);
-        });
-
-        if (response.data.status.phase === "completed") {
-          retrieveTaskResponse = response;
-          break;
-        }
-        pollCount++;
-      }
-
-      console.log("Finish...Mint NFT now");
-
-      const output = retrieveTaskResponse?.data?.output;
-
-      if (!output) {
-        throw new Error("Request timeout, upload took too long");
-      }
-
-      const { videoFileCid, nftMetadataCid } = output?.export?.ipfs;
-      console.log({ videoFileCid, nftMetadataCid });
+      // upload video to IPFS
+      const videoData = await transcodeAndUploadVideo(video, name);
 
       // 6. Mint NFT
-      const tx = await mintNFT(`ipfs://${nftMetadataCid}`);
+      console.log("Finish...Mint NFT now");
+      const tx = await mintNFT(`ipfs://${trailerData.nftMetadataCid}`);
       const result = await tx.wait();
       console.log({ result });
 
@@ -120,13 +158,14 @@ const UploadVideoPage = () => {
         const storeVideoResponse = await storeVideo({
           name,
           description,
+          image_cid: imageFileCid,
           txn_hash: tx.hash,
-          nft_cid: nftMetadataCid,
-          video_cid: videoFileCid,
-          trailer_nft_cid: nftMetadataCid,
-          trailer_video_cid: videoFileCid,
+          nft_cid: videoData.nftMetadataCid,
+          video_cid: videoData.videoFileCid,
+          trailer_nft_cid: trailerData.nftMetadataCid,
+          trailer_video_cid: trailerData.videoFileCid,
           wallet_address: walletAddress,
-          video_duration,
+          video_duration: videoData.video_duration,
         });
         console.log({ storeVideoResponse });
         setStatus("idle");
@@ -206,24 +245,55 @@ const UploadVideoPage = () => {
                                 strokeLinejoin="round"
                               />
                             </svg>
-                            <div className="flex text-sm text-gray-600">
-                              <label
-                                htmlFor="thumbnail-upload"
-                                className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500"
-                              >
-                                <span>Upload an image</span>
-                                <input
-                                  type="file"
-                                  className="sr-only"
-                                  {...register("thumbnail")}
-                                />
-                              </label>
-                              <p className="pl-1">or drag and drop</p>
+                            <div className="flex text-sm text-center items-center justify-center w-64 text-gray-600">
+                            <input
+                              type="file"
+                              // className="sr-only"
+                              name="thumbnail"
+                              accept=".jpg"
+                              {...register("thumbnail")}
+                            />
                             </div>
                             <p className="text-xs text-gray-500">
                               PNG or JPG supported
                             </p>
                           </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Video Trailer
+                      </label>
+                      <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                        <div className="space-y-1 text-center">
+                          <svg
+                            className="mx-auto h-12 w-12 text-gray-400"
+                            stroke="currentColor"
+                            fill="none"
+                            viewBox="0 0 48 48"
+                            aria-hidden="true"
+                          >
+                            <path
+                              d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                              strokeWidth={2}
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                          <div className="flex text-sm text-center items-center justify-center w-64 text-gray-600">
+                            <input
+                              type="file"
+                              // className="sr-only"
+                              name="trailer"
+                              accept=".mp4"
+                              {...register("trailer")}
+                            />
+                          </div>
+                          <p className="text-xs text-gray-500">
+                            Only .mp4 supported
+                          </p>
                         </div>
                       </div>
                     </div>

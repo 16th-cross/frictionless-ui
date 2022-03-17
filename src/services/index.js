@@ -50,6 +50,7 @@ const retrieveTask = (taskId) => {
 const storeVideo = ({
   name,
   description,
+  image_cid,
   txn_hash,
   nft_cid,
   video_cid,
@@ -61,6 +62,7 @@ const storeVideo = ({
   return axios.post("http://localhost:6060/add-video", {
     name,
     description,
+    image_cid,
     txn_hash,
     nft_cid,
     video_cid,
