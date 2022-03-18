@@ -140,10 +140,10 @@ const UploadVideoPage = () => {
       console.log("Url for image =", imageFileCid);
 
       // upload trailer to IPFS
-      const trailerData = await transcodeAndUploadVideo(trailer, `${name}_trailer`);
+      const trailerData = await transcodeAndUploadVideo(trailer, name);
 
       // upload video to IPFS
-      const videoData = await transcodeAndUploadVideo(video, name);
+      const videoData = await transcodeAndUploadVideo(video, `${name}_video`);
 
       // 6. Mint NFT
       console.log("Finish...Mint NFT now");
