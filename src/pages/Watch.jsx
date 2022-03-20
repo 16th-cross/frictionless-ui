@@ -69,7 +69,7 @@ const WatchPage = () => {
     try {
       const deleteFlowOperation = sf.cfaV1.deleteFlow({
         sender: account,
-        receiver: currentVideo.wallet_address,
+        receiver: currentVideo.createdBy,
         superToken: addresses.fDAIx,
       });
 
