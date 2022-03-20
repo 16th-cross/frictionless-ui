@@ -41,7 +41,7 @@ const WatchPage = () => {
     try {
       const createFlowOperation = sf.cfaV1.createFlow({
         flowRate,
-        receiver: currentVideo.wallet_address,
+        receiver: currentVideo.createdBy,
         superToken: addresses.fDAIx,
       });
 
