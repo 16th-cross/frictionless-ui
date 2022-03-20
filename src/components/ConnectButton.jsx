@@ -25,9 +25,9 @@ const ConnectButton = () => {
       <div className="border rounded-md p-3">
         <ShortAddress address={wallet.accounts[0].address} />
       </div>
-      {connectedChain.id !== "0x5" && (
+      {connectedChain.id !== "0x13881" && (
         <button
-          onClick={() => setChain({ chainId: "0x5" })}
+          onClick={() => setChain({ chainId: "0x13881" })}
           disabled={settingChain}
           className="ml-8 whitespace-nowrap inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700"
         >

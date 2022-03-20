@@ -21,8 +21,14 @@ const Header = () => (
 
       <div className="hidden md:flex items-center justify-end md:flex-1 ">
         <Link
+          to="/topup"
+          className="whitespace-nowrap text-white bg-green-500 hover:bg-green-600 font-medium rounded-lg px-5 py-2 text-center"
+        >
+          Topup
+        </Link>
+        <Link
           to="/watch"
-          className="whitespace-nowrap text-base font-medium text-gray-500 hover:text-gray-900"
+          className="ml-8 whitespace-nowrap text-base font-medium text-gray-500 hover:text-gray-900"
         >
           Watch
         </Link>

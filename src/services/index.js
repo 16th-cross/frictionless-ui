@@ -59,7 +59,7 @@ const storeVideo = ({
   wallet_address,
   video_duration,
 }) => {
-  return axios.post("https://frictionless-node-backend.herokuapp.com/add-video", {
+  return axios.post(`${process.env.REACT_APP_BE_URL}/add-video`, {
     name,
     description,
     image_cid,
@@ -74,7 +74,7 @@ const storeVideo = ({
 };
 
 const fetchAllVideos = () => {
-  return axios.get("https://frictionless-node-backend.herokuapp.com/get-all");
+  return axios.get(`${process.env.REACT_APP_BE_URL}/get-all`);
 };
 export {
   createDirectUploadURL,

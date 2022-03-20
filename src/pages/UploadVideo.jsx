@@ -14,14 +14,14 @@ import { ethers } from "ethers";
 import { useState } from "react";
 import LoadingIndicator from "../components/LoadingIndicator";
 import { useHistory } from "react-router-dom";
-import { create } from 'ipfs-http-client'
+import { create } from "ipfs-http-client";
 
 const UploadVideoPage = () => {
   const { register, handleSubmit } = useForm();
-  const { wallet, provider } = useWeb3Onboard();
+  const { wallet, account, provider } = useWeb3Onboard();
   const history = useHistory();
   const [status, setStatus] = useState(false);
-  const client = create('https://ipfs.infura.io:5001/api/v0')
+  const client = create("https://ipfs.infura.io:5001/api/v0");
   // const file = event.target.files[0];
   // const sourceURL = URL.createObjectURL(file);
 
@@ -45,7 +45,7 @@ const UploadVideoPage = () => {
     // 2. Livepeer transcode
     const uploadResponse = await uploadVideo(uploadURL, videoArrayBuffer);
     console.log({ uploadResponse });
-    
+
     // 3. List all assets
     const MAX_POLL_COUNT = 10;
     const POLL_INTERVAL = 3000;
@@ -153,8 +153,6 @@ const UploadVideoPage = () => {
 
       // 7. POST data to backend
       if (tx.hash) {
-        const walletAddress = wallet?.accounts[0]?.address;
-        console.log({ walletAddress });
         const storeVideoResponse = await storeVideo({
           name,
           description,
@@ -164,7 +162,7 @@ const UploadVideoPage = () => {
           video_cid: videoData.videoFileCid,
           trailer_nft_cid: trailerData.nftMetadataCid,
           trailer_video_cid: trailerData.videoFileCid,
-          wallet_address: walletAddress,
+          wallet_address: account,
           video_duration: videoData.video_duration,
         });
         console.log({ storeVideoResponse });
@@ -246,13 +244,13 @@ const UploadVideoPage = () => {
                               />
                             </svg>
                             <div className="flex text-sm text-center items-center justify-center w-64 text-gray-600">
-                            <input
-                              type="file"
-                              // className="sr-only"
-                              name="thumbnail"
-                              accept=".jpg"
-                              {...register("thumbnail")}
-                            />
+                              <input
+                                type="file"
+                                // className="sr-only"
+                                name="thumbnail"
+                                accept=".jpg"
+                                {...register("thumbnail")}
+                              />
                             </div>
                             <p className="text-xs text-gray-500">
                               PNG or JPG supported
@@ -264,7 +262,7 @@ const UploadVideoPage = () => {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
-                        Video Trailer
+                        Video Trailer (for NFT)
                       </label>
                       <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
                         <div className="space-y-1 text-center">
@@ -340,7 +338,7 @@ const UploadVideoPage = () => {
                       disabled={!wallet || status === "loading"}
                       className="inline-flex gap-1 justify-center py-3 px-12 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-300"
                     >
-                      Upload
+                      Upload and Create NFT
                       {status === "loading" && <LoadingIndicator />}
                     </button>
                     {!wallet && (

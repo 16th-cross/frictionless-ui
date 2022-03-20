@@ -6,6 +6,7 @@ import initOnboard from "./initOnboard";
 import ViewAllPage from "./pages/ViewAll";
 import WatchPage from "./pages/Watch";
 import AllVideosPage from "./pages/AllVideos";
+import TopupPage from "./pages/Topup";
 
 initOnboard();
 const App = () => {
@@ -26,6 +27,9 @@ const App = () => {
       </Route>
       <Route path="/watch/:id" exact>
         <WatchPage />
+      </Route>
+      <Route path="/topup" exact>
+        <TopupPage />
       </Route>
     </Router>
   );

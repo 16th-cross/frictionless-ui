@@ -24,12 +24,12 @@ const initOnboard = () =>
         rpcUrl:
           "https://rpc-mumbai.maticvigil.com/v1/ee88c0928ef4396cb42c61833d0736ecc7340f07",
       },
-      {
-        id: "0x5",
-        token: "ETH",
-        label: "Goerli Testnet",
-        rpcUrl: "https://rpc.goerli.mudit.blog/",
-      },
+      // {
+      //   id: "0x5",
+      //   token: "ETH",
+      //   label: "Goerli Testnet",
+      //   rpcUrl: "https://rpc.goerli.mudit.blog/",
+      // },
     ],
     appMetadata: {
       name: "Frictionless",
