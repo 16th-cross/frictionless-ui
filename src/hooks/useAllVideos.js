@@ -35,7 +35,7 @@ function useAllVideos() {
             url: `https://ipfs.livepeer.com/ipfs/${video_cid}`,
             trailer_url: `https://ipfs.livepeer.com/ipfs/${trailer_video_cid}`,
             createdBy: wallet_address,
-            nftHash: `https://goerli.etherscan.io/tx/${txn_hash}`,
+            nftHash: `https://mumbai.polygonscan.com/tx/${txn_hash}`,
             video_duration,
             trailer_nft_cid,
             imgSrc: `https://ipfs.infura.io/ipfs/${image_cid}`,
