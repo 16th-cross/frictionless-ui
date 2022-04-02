@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 
 const HomePage = () => (
-  <section className="text-gray-600 h-screen w-full px-4">
+  <section className="text-gray-600 h-screen w-full px-4  bg-gradient-to-t from-indigo-400 via-indigo-100 to-white">
     <div className="text-center">
       <h1 className="text-6xl pt-16 font-extrabold text-indigo-500">
         Welcome to Frictionless

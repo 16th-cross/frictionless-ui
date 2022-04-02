@@ -19,7 +19,7 @@ const Header = () => (
         </Link>
       </div>
 
-      <div className="hidden md:flex items-center justify-end md:flex-1 ">
+      <div className="hidden md:flex items-center justify-end md:flex-1">
         <Link
           to="/topup"
           className="whitespace-nowrap text-white bg-green-500 hover:bg-green-600 font-medium rounded-lg px-5 py-2 text-center"
